@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent / 'src'))
 from scraper import AliExpressScraper
 from excel_exporter import ExcelExporter
 from config_loader import ConfigLoader
+from affiliate_converter import AffiliateConverter, create_affiliate_converter_from_config
 
 logging.basicConfig(
     level=logging.INFO,
@@ -147,6 +148,9 @@ def run_from_config(config_path: str):
     searches = config['searches']
     export_config = config['export']
 
+    # Initialize affiliate converter
+    affiliate_converter = create_affiliate_converter_from_config(config)
+
     # Initialize scraper
     logger.info("Initializing scraper...")
     with AliExpressScraper(
@@ -172,6 +176,10 @@ def run_from_config(config_path: str):
                     max_price=search.get('max_price'),
                     sort_by=search.get('sort_by', 'default')
                 )
+
+                # Add affiliate URLs to products
+                if products:
+                    products = affiliate_converter.add_affiliate_to_products(products)
 
                 if products:
                     filepath = exporter.export_to_excel(
@@ -201,6 +209,10 @@ def run_from_config(config_path: str):
                     sort_by=search.get('sort_by', 'default')
                 )
 
+                # Add affiliate URLs to products
+                if products:
+                    products = affiliate_converter.add_affiliate_to_products(products)
+
                 if products:
                     results_dict[search['query']] = products
                     logger.info(f"✓ Found {len(products)} products")
@@ -227,6 +239,10 @@ def run_from_command_line(args):
     Args:
         args: Parsed command line arguments
     """
+    # Initialize affiliate converter (disabled by default for CLI mode)
+    # To use affiliate links with CLI, use config file mode instead
+    affiliate_converter = AffiliateConverter({'enabled': False})
+
     # Initialize scraper
     logger.info("Initializing scraper...")
     with AliExpressScraper(
@@ -253,6 +269,10 @@ def run_from_command_line(args):
                     max_price=args.max_price,
                     sort_by=args.sort
                 )
+
+                # Add affiliate URLs to products
+                if products:
+                    products = affiliate_converter.add_affiliate_to_products(products)
 
                 if products:
                     results_dict[query] = products
@@ -283,6 +303,10 @@ def run_from_command_line(args):
                 max_price=args.max_price,
                 sort_by=args.sort
             )
+
+            # Add affiliate URLs to products
+            if products:
+                products = affiliate_converter.add_affiliate_to_products(products)
 
             if products:
                 filepath = exporter.export_to_excel(

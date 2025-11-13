@@ -1,0 +1,60 @@
+{
+  "_comment": "AliExpress Affiliate Configuration Examples",
+  "_instructions": "Copy the affiliate section that matches your setup to config.json",
+
+  "example_1_standard_aliexpress": {
+    "affiliate": {
+      "enabled": true,
+      "preset": "aliexpress_standard",
+      "affiliate_id": "your_affiliate_id_here",
+      "tracking_id": "",
+      "parameters": {}
+    }
+  },
+
+  "example_2_admitad": {
+    "affiliate": {
+      "enabled": true,
+      "preset": "admitad",
+      "affiliate_id": "your_admitad_uid",
+      "parameters": {}
+    }
+  },
+
+  "example_3_custom_parameters": {
+    "affiliate": {
+      "enabled": true,
+      "preset": "custom",
+      "affiliate_id": "",
+      "parameters": {
+        "aff_trace_key": "your_trace_key",
+        "terminal_id": "your_terminal_id",
+        "aff_platform": "portals-tool",
+        "sk": "your_sk_value",
+        "aff_request": "yes"
+      }
+    }
+  },
+
+  "example_4_multiple_params": {
+    "affiliate": {
+      "enabled": true,
+      "preset": "custom",
+      "parameters": {
+        "aff_short_key": "your_short_key",
+        "aff_sub": "your_sub_id",
+        "aff_sub2": "campaign_name",
+        "aff_unique": "1"
+      }
+    }
+  },
+
+  "example_5_disabled": {
+    "affiliate": {
+      "enabled": false,
+      "preset": "aliexpress_standard",
+      "affiliate_id": "",
+      "parameters": {}
+    }
+  }
+}

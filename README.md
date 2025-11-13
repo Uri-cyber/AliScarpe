@@ -172,6 +172,60 @@ Options:
 - `auto_format`: Apply formatting to Excel (recommended: true)
 - `separate_files`: Create separate files for each search vs. one file with multiple sheets
 
+### Affiliate Settings
+The scraper supports automatic conversion of product URLs to affiliate tracking links. This feature is optional and disabled by default.
+
+**Configuration options:**
+- `enabled`: Enable/disable affiliate link conversion (true/false)
+- `preset`: Pre-configured affiliate setup ("aliexpress_standard", "admitad", "custom")
+- `affiliate_id`: Your affiliate ID/tracking key
+- `tracking_id`: Optional additional tracking ID
+- `parameters`: Custom URL parameters for affiliate tracking
+
+**Example configurations:**
+
+1. **Standard AliExpress Affiliate:**
+```json
+"affiliate": {
+  "enabled": true,
+  "preset": "aliexpress_standard",
+  "affiliate_id": "your_affiliate_id_here",
+  "tracking_id": "",
+  "parameters": {}
+}
+```
+
+2. **Admitad Affiliate:**
+```json
+"affiliate": {
+  "enabled": true,
+  "preset": "admitad",
+  "affiliate_id": "your_admitad_uid",
+  "parameters": {}
+}
+```
+
+3. **Custom Parameters:**
+```json
+"affiliate": {
+  "enabled": true,
+  "preset": "custom",
+  "parameters": {
+    "aff_trace_key": "your_trace_key",
+    "terminal_id": "your_terminal_id",
+    "aff_platform": "portals-tool",
+    "sk": "your_sk_value"
+  }
+}
+```
+
+See `config_affiliate_examples.json` for more configuration examples.
+
+**How it works:**
+- When enabled, the scraper automatically converts all product URLs to include your affiliate parameters
+- The Excel output will contain both the original URL and the affiliate URL in separate columns
+- Affiliate conversion works in config file mode (not available with command-line only mode)
+
 ## Output
 
 ### Excel File Contents
@@ -184,6 +238,7 @@ The scraper now extracts **COMPREHENSIVE** information for each product, includi
 - **Product ID**: Unique product identifier
 - **Product Title**: Full product name
 - **Product URL**: Direct link to product page
+- **Affiliate URL**: Affiliate tracking URL (when affiliate mode is enabled)
 - **Image URL**: Product image link
 
 #### Pricing & Discounts

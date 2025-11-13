@@ -94,6 +94,7 @@ class ExcelExporter:
             'product_id': 'Product ID',
             'title': 'Product Title',
             'url': 'Product URL',
+            'affiliate_url': 'Affiliate URL',
             'image_url': 'Image URL',
 
             # Pricing

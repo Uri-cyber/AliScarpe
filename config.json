@@ -20,6 +20,13 @@
       "sort_by": "orders"
     }
   ],
+  "affiliate": {
+    "enabled": false,
+    "preset": "aliexpress_standard",
+    "affiliate_id": "YOUR_AFFILIATE_ID_HERE",
+    "tracking_id": "",
+    "parameters": {}
+  },
   "export": {
     "output_dir": "output",
     "auto_format": true,
