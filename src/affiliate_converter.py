@@ -198,8 +198,12 @@ def create_affiliate_converter_from_config(config: dict) -> AffiliateConverter:
     # Check if using a preset
     preset = affiliate_config.get('preset')
     if preset:
+        # Preserve the enabled setting from original config
+        enabled = affiliate_config.get('enabled', False)
         affiliate_id = affiliate_config.get('affiliate_id', '')
         custom_params = affiliate_config.get('parameters', {})
         affiliate_config = AffiliatePresets.get_preset(preset, affiliate_id, parameters=custom_params)
+        # Override enabled setting with user's preference
+        affiliate_config['enabled'] = enabled
 
     return AffiliateConverter(affiliate_config)
