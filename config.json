@@ -1,0 +1,28 @@
+{
+  "scraping": {
+    "use_selenium": true,
+    "headless": true,
+    "timeout": 30
+  },
+  "searches": [
+    {
+      "query": "laptop",
+      "max_products": 20,
+      "min_price": null,
+      "max_price": null,
+      "sort_by": "default"
+    },
+    {
+      "query": "wireless earbuds",
+      "max_products": 15,
+      "min_price": 10,
+      "max_price": 100,
+      "sort_by": "orders"
+    }
+  ],
+  "export": {
+    "output_dir": "output",
+    "auto_format": true,
+    "separate_files": false
+  }
+}
