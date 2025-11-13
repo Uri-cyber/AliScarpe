@@ -216,12 +216,13 @@ class AliExpressScraper:
         return products
 
     def _extract_product_info(self, element) -> Optional[Dict]:
-        """Extract information from a single product element"""
+        """Extract comprehensive information from a single product element"""
         try:
             product = {}
 
+            # ========== BASIC INFO ==========
             # Title
-            title_selectors = ['h1', 'h2', 'h3', 'span[class*="title"]', 'a[title]']
+            title_selectors = ['h1', 'h2', 'h3', 'span[class*="title"]', 'a[title]', 'div[class*="title"]']
             for selector in title_selectors:
                 title_elem = element.select_one(selector)
                 if title_elem:
@@ -230,18 +231,6 @@ class AliExpressScraper:
 
             if not product.get('title'):
                 return None
-
-            # Price
-            price_selectors = ['span[class*="price"]', 'div[class*="price"]', 'strong[class*="price"]']
-            for selector in price_selectors:
-                price_elem = element.select_one(selector)
-                if price_elem:
-                    price_text = price_elem.get_text(strip=True)
-                    # Extract numeric price
-                    price_match = re.search(r'[\d,]+\.?\d*', price_text)
-                    if price_match:
-                        product['price'] = price_match.group().replace(',', '')
-                    break
 
             # URL
             link_elem = element.find('a', href=True)
@@ -253,16 +242,73 @@ class AliExpressScraper:
                     href = 'https://www.aliexpress.com' + href
                 product['url'] = href
 
+                # Extract product ID from URL
+                product_id_match = re.search(r'/(\d{10,})', href)
+                if product_id_match:
+                    product['product_id'] = product_id_match.group(1)
+
             # Image URL
             img_elem = element.find('img', src=True)
+            if not img_elem:
+                img_elem = element.find('img', attrs={'data-src': True})
             if img_elem:
                 img_src = img_elem.get('src') or img_elem.get('data-src', '')
                 if img_src.startswith('//'):
                     img_src = 'https:' + img_src
                 product['image_url'] = img_src
 
+            # ========== PRICING ==========
+            # Current Price
+            price_selectors = ['span[class*="price"]', 'div[class*="price"]', 'strong[class*="price"]',
+                             'span[class*="Price"]', 'div[class*="snow-price"]']
+            for selector in price_selectors:
+                price_elem = element.select_one(selector)
+                if price_elem:
+                    price_text = price_elem.get_text(strip=True)
+                    price_match = re.search(r'[\d,]+\.?\d*', price_text)
+                    if price_match:
+                        product['price'] = price_match.group().replace(',', '')
+                    break
+
+            # Original Price (before discount)
+            original_price_selectors = ['span[class*="original"]', 'span[class*="was"]',
+                                       'del', 's', 'span[class*="old-price"]']
+            for selector in original_price_selectors:
+                orig_elem = element.select_one(selector)
+                if orig_elem:
+                    orig_text = orig_elem.get_text(strip=True)
+                    orig_match = re.search(r'[\d,]+\.?\d*', orig_text)
+                    if orig_match:
+                        product['original_price'] = orig_match.group().replace(',', '')
+                        # Calculate discount percentage
+                        if product.get('price') and product.get('original_price'):
+                            try:
+                                current = float(product['price'])
+                                original = float(product['original_price'])
+                                discount = ((original - current) / original) * 100
+                                product['discount_percentage'] = f"{discount:.1f}%"
+                            except:
+                                pass
+                    break
+
+            # Price Range (for products with variations)
+            price_range_match = re.search(r'([\d,]+\.?\d*)\s*-\s*([\d,]+\.?\d*)', element.get_text())
+            if price_range_match:
+                product['price_min'] = price_range_match.group(1).replace(',', '')
+                product['price_max'] = price_range_match.group(2).replace(',', '')
+
+            # Discount/Sale badge
+            discount_selectors = ['span[class*="discount"]', 'span[class*="sale"]', 'div[class*="off"]']
+            for selector in discount_selectors:
+                discount_elem = element.select_one(selector)
+                if discount_elem:
+                    product['discount_badge'] = discount_elem.get_text(strip=True)
+                    break
+
+            # ========== RATINGS & REVIEWS ==========
             # Rating
-            rating_selectors = ['span[class*="rating"]', 'div[class*="rating"]', 'span[class*="star"]']
+            rating_selectors = ['span[class*="rating"]', 'div[class*="rating"]', 'span[class*="star"]',
+                              'span[class*="Star"]', 'div[class*="rate"]']
             for selector in rating_selectors:
                 rating_elem = element.select_one(selector)
                 if rating_elem:
@@ -272,27 +318,166 @@ class AliExpressScraper:
                         product['rating'] = rating_match.group()
                     break
 
-            # Orders/Sales
-            orders_selectors = ['span[class*="order"]', 'span[class*="sale"]', 'em[title*="sold"]']
+            # Number of reviews
+            review_count_selectors = ['span[class*="review"]', 'span[class*="evaluation"]',
+                                     'a[class*="review"]', 'span[class*="Review"]']
+            for selector in review_count_selectors:
+                review_elem = element.select_one(selector)
+                if review_elem:
+                    review_text = review_elem.get_text(strip=True)
+                    # Extract number (handle K notation: 1.2K = 1200)
+                    review_match = re.search(r'([\d.]+)\s*([KkMm])?', review_text)
+                    if review_match:
+                        num = review_match.group(1)
+                        multiplier = review_match.group(2)
+                        if multiplier:
+                            if multiplier.upper() == 'K':
+                                num = str(float(num) * 1000)
+                            elif multiplier.upper() == 'M':
+                                num = str(float(num) * 1000000)
+                        product['review_count'] = num
+                    break
+
+            # ========== ORDERS/SALES ==========
+            orders_selectors = ['span[class*="order"]', 'span[class*="sale"]', 'span[class*="sold"]',
+                              'em[title*="sold"]', 'span[class*="Sales"]']
             for selector in orders_selectors:
                 orders_elem = element.select_one(selector)
                 if orders_elem:
                     orders_text = orders_elem.get_text(strip=True)
                     product['orders'] = orders_text
+                    # Extract numeric value
+                    orders_match = re.search(r'([\d,]+\.?\d*)\s*([KkMm+])?', orders_text)
+                    if orders_match:
+                        num = orders_match.group(1).replace(',', '')
+                        multiplier = orders_match.group(2)
+                        if multiplier:
+                            if 'K' in multiplier.upper():
+                                num = str(float(num) * 1000)
+                            elif 'M' in multiplier.upper():
+                                num = str(float(num) * 1000000)
+                        product['orders_count'] = num
                     break
 
-            # Shipping info
+            # ========== SHIPPING ==========
+            # Shipping info (free/cost)
             shipping_elem = element.select_one('span[class*="shipping"]')
+            if not shipping_elem:
+                shipping_elem = element.select_one('div[class*="shipping"]')
+            if not shipping_elem:
+                shipping_elem = element.select_one('span[class*="Shipping"]')
             if shipping_elem:
                 product['shipping'] = shipping_elem.get_text(strip=True)
+                # Determine if free shipping
+                if 'free' in product['shipping'].lower():
+                    product['free_shipping'] = 'Yes'
+                else:
+                    product['free_shipping'] = 'No'
 
+            # Delivery time
+            delivery_selectors = ['span[class*="delivery"]', 'span[class*="arrive"]', 'div[class*="delivery"]']
+            for selector in delivery_selectors:
+                delivery_elem = element.select_one(selector)
+                if delivery_elem:
+                    product['delivery_time'] = delivery_elem.get_text(strip=True)
+                    break
+
+            # Ships from
+            ships_from_selectors = ['span[class*="from"]', 'span[class*="warehouse"]', 'div[class*="ships"]']
+            for selector in ships_from_selectors:
+                ships_elem = element.select_one(selector)
+                if ships_elem:
+                    product['ships_from'] = ships_elem.get_text(strip=True)
+                    break
+
+            # ========== STORE INFO ==========
             # Store name
-            store_selectors = ['a[class*="store"]', 'span[class*="store"]', 'div[class*="shop"]']
+            store_selectors = ['a[class*="store"]', 'span[class*="store"]', 'div[class*="shop"]',
+                             'a[class*="Shop"]', 'span[class*="seller"]']
             for selector in store_selectors:
                 store_elem = element.select_one(selector)
                 if store_elem:
                     product['store_name'] = store_elem.get_text(strip=True)
                     break
+
+            # Store rating
+            store_rating_selectors = ['span[class*="store"][class*="rating"]', 'div[class*="shop"][class*="rating"]']
+            for selector in store_rating_selectors:
+                store_rating_elem = element.select_one(selector)
+                if store_rating_elem:
+                    product['store_rating'] = store_rating_elem.get_text(strip=True)
+                    break
+
+            # ========== BADGES & INDICATORS ==========
+            # Top selling / Choice / Hot badges
+            badge_selectors = ['span[class*="badge"]', 'span[class*="tag"]', 'div[class*="badge"]',
+                             'span[class*="choice"]', 'span[class*="hot"]', 'span[class*="top"]']
+            badges = []
+            for selector in badge_selectors:
+                badge_elems = element.select(selector)
+                for badge_elem in badge_elems:
+                    badge_text = badge_elem.get_text(strip=True)
+                    if badge_text and len(badge_text) < 30:  # Avoid long text
+                        badges.append(badge_text)
+            if badges:
+                product['badges'] = ', '.join(badges)
+
+            # "Almost gone" / "Limited stock"
+            limited_stock_keywords = ['almost gone', 'limited', 'only.*left', 'low stock']
+            element_text = element.get_text().lower()
+            for keyword in limited_stock_keywords:
+                if re.search(keyword, element_text):
+                    product['stock_status'] = 'Limited Stock'
+                    break
+
+            # ========== POPULARITY INDICATORS ==========
+            # Recently sold count
+            recent_sold_match = re.search(r'(\d+)\s*sold.*?(24|hour|recently)', element.get_text(), re.IGNORECASE)
+            if recent_sold_match:
+                product['recent_sold_24h'] = recent_sold_match.group(1)
+
+            # People viewing
+            viewing_match = re.search(r'(\d+)\s*people.*?viewing', element.get_text(), re.IGNORECASE)
+            if viewing_match:
+                product['people_viewing'] = viewing_match.group(1)
+
+            # ========== ADDITIONAL INFO ==========
+            # Ad indicator
+            ad_indicators = element.select('span[class*="ad"]')
+            if ad_indicators or 'sponsored' in element.get_text().lower():
+                product['is_sponsored'] = 'Yes'
+            else:
+                product['is_sponsored'] = 'No'
+
+            # Variations available (colors, sizes, etc.)
+            variation_selectors = ['span[class*="variation"]', 'div[class*="option"]', 'span[class*="color"]']
+            for selector in variation_selectors:
+                var_elem = element.select_one(selector)
+                if var_elem:
+                    product['has_variations'] = 'Yes'
+                    variation_text = var_elem.get_text(strip=True)
+                    # Try to extract number of options
+                    var_match = re.search(r'(\d+)\s*(color|option|size)', variation_text, re.IGNORECASE)
+                    if var_match:
+                        product['variation_count'] = var_match.group(1)
+                    break
+
+            # Plus/Premium membership discount
+            plus_match = re.search(r'plus.*?(save|off|\d+%)', element.get_text(), re.IGNORECASE)
+            if plus_match:
+                product['plus_discount'] = plus_match.group(0)
+
+            # Coupon available
+            coupon_keywords = ['coupon', 'code', 'voucher']
+            for keyword in coupon_keywords:
+                if keyword in element.get_text().lower():
+                    product['coupon_available'] = 'Yes'
+                    break
+
+            # Return policy
+            return_match = re.search(r'(\d+)\s*day.*?return', element.get_text(), re.IGNORECASE)
+            if return_match:
+                product['return_days'] = return_match.group(1)
 
             return product if product.get('title') else None
 

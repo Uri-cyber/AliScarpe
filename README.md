@@ -4,10 +4,17 @@ A powerful and configurable Python scraper for extracting product information fr
 
 ## Features
 
+- **🎯 Comprehensive Data Extraction**: Extracts 30+ data points per product including:
+  - Complete pricing (current, original, discounts, ranges)
+  - Ratings, reviews, and sales statistics
+  - Shipping details (cost, time, origin)
+  - Store information and ratings
+  - Product variations, badges, and stock status
+  - Coupons, return policies, and more!
 - **Flexible Scraping**: Scrape products by search query with customizable parameters
 - **Price Filtering**: Set minimum and maximum price ranges
 - **Sorting Options**: Sort by default, price (ascending/descending), or popularity (orders)
-- **Excel Export**: Automatic export to Excel with professional formatting
+- **Excel Export**: Automatic export to Excel with professional formatting and 30+ columns
 - **Multiple Search Support**: Scrape multiple product categories in one run
 - **Two Usage Modes**:
   - Configuration file for complex scraping jobs
@@ -169,20 +176,56 @@ Options:
 
 ### Excel File Contents
 
-The scraper extracts the following information for each product:
+The scraper now extracts **COMPREHENSIVE** information for each product, including:
 
+#### Basic Information
 - **#**: Row number
 - **Export Date**: When the data was scraped
+- **Product ID**: Unique product identifier
 - **Product Title**: Full product name
-- **Price (USD)**: Product price in USD
-- **Rating**: Customer rating (if available)
-- **Orders/Sales**: Number of orders/sales
-- **Store Name**: Seller's store name
-- **Shipping Info**: Shipping details
 - **Product URL**: Direct link to product page
 - **Image URL**: Product image link
-- **Description**: Product description (if available)
-- **Specifications**: Product specifications (if available)
+
+#### Pricing & Discounts
+- **Current Price (USD)**: Current product price
+- **Original Price (USD)**: Original price before discount
+- **Discount %**: Calculated discount percentage
+- **Discount Badge**: Sale/discount badge text
+- **Price Min/Max (Range)**: Price range for products with variations
+- **Plus Member Discount**: Special discounts for AliExpress Plus members
+- **Coupon Available**: Whether coupons are available (Yes/No)
+
+#### Ratings & Reviews
+- **Rating**: Average customer rating (out of 5)
+- **Number of Reviews**: Total count of customer reviews
+
+#### Sales & Popularity
+- **Orders/Sales Text**: Raw orders/sales text from listing
+- **Orders Count**: Numeric count of total orders
+- **Sold in 24h**: Number of items sold in last 24 hours
+- **People Viewing**: Current number of people viewing the product
+
+#### Shipping Information
+- **Shipping Info**: Full shipping details
+- **Free Shipping**: Whether shipping is free (Yes/No)
+- **Delivery Time**: Estimated delivery timeframe
+- **Ships From**: Origin country/warehouse location
+
+#### Store/Seller Information
+- **Store Name**: Seller's store name
+- **Store Rating**: Seller's store rating
+
+#### Product Features
+- **Has Variations**: Whether product has variations like colors/sizes (Yes/No)
+- **Number of Variations**: Count of available variations
+- **Badges**: Special badges (Top Selling, Choice, Hot, etc.)
+- **Stock Status**: Stock availability status (Limited Stock, etc.)
+
+#### Additional Information
+- **Is Sponsored**: Whether listing is a sponsored ad (Yes/No)
+- **Return Policy (Days)**: Number of days for returns
+- **Description**: Product description (when available)
+- **Specifications**: Detailed product specifications (when available)
 
 ### Output Files
 

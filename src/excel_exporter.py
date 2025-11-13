@@ -88,16 +88,55 @@ class ExcelExporter:
         Returns:
             Formatted DataFrame
         """
-        # Define column order and names
+        # Define column order and names - Comprehensive mapping for all fields
         column_mapping = {
+            # Basic Info
+            'product_id': 'Product ID',
             'title': 'Product Title',
-            'price': 'Price (USD)',
-            'rating': 'Rating',
-            'orders': 'Orders/Sales',
-            'store_name': 'Store Name',
-            'shipping': 'Shipping Info',
             'url': 'Product URL',
             'image_url': 'Image URL',
+
+            # Pricing
+            'price': 'Current Price (USD)',
+            'original_price': 'Original Price (USD)',
+            'discount_percentage': 'Discount %',
+            'discount_badge': 'Discount Badge',
+            'price_min': 'Price Min (Range)',
+            'price_max': 'Price Max (Range)',
+
+            # Ratings & Reviews
+            'rating': 'Rating',
+            'review_count': 'Number of Reviews',
+
+            # Sales & Popularity
+            'orders': 'Orders/Sales Text',
+            'orders_count': 'Orders Count',
+            'recent_sold_24h': 'Sold in 24h',
+            'people_viewing': 'People Viewing',
+
+            # Shipping
+            'shipping': 'Shipping Info',
+            'free_shipping': 'Free Shipping',
+            'delivery_time': 'Delivery Time',
+            'ships_from': 'Ships From',
+
+            # Store Info
+            'store_name': 'Store Name',
+            'store_rating': 'Store Rating',
+
+            # Product Features
+            'has_variations': 'Has Variations',
+            'variation_count': 'Number of Variations',
+            'badges': 'Badges',
+            'stock_status': 'Stock Status',
+
+            # Additional Info
+            'is_sponsored': 'Is Sponsored',
+            'coupon_available': 'Coupon Available',
+            'plus_discount': 'Plus Member Discount',
+            'return_days': 'Return Policy (Days)',
+
+            # Detailed (from product page)
             'description': 'Description',
             'specifications': 'Specifications'
         }
@@ -113,9 +152,11 @@ class ExcelExporter:
         existing_columns = [col for col in desired_order if col in df.columns]
         df = df[existing_columns]
 
-        # Clean price column (remove currency symbols, convert to float)
-        if 'Price (USD)' in df.columns:
-            df['Price (USD)'] = df['Price (USD)'].apply(self._clean_price)
+        # Clean price columns (remove currency symbols, convert to float)
+        price_columns = ['Current Price (USD)', 'Original Price (USD)', 'Price Min (Range)', 'Price Max (Range)']
+        for col in price_columns:
+            if col in df.columns:
+                df[col] = df[col].apply(self._clean_price)
 
         # Clean rating column
         if 'Rating' in df.columns:
